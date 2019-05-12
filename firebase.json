@@ -8,7 +8,7 @@
     "public": "public",
     "rewrites": [{
       "source": "**",
-      "functions": "**"
+      "functions": "harvest,app"
     }],
     "ignore": [
       "firebase.json",

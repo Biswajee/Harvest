@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const firebase = require('firebase-admin');
 const express = require('express');
+const engines = require('consolidate');
 const app = express();
 const cors = require('cors');
 const firebaseApp = firebase.initializeApp();
@@ -8,8 +9,10 @@ const firebaseApp = firebase.initializeApp();
 
 // Automatically allow cross-origin requests
 app.use(cors({ origin: true }));
-
-
+// Set the view engine
+app.engine('hbs', engines.handlebars);
+app.set('views', './views');
+app.set('view engine', 'hbs');
 
 // // set the status according to deviceid
 // function setStatus(deviceid) {
@@ -37,10 +40,9 @@ exports.harvest = functions.https.onRequest(async (req, res) => {
         const deviceID = req.query.id;
         // Push the new message into the Realtime Database using the Firebase Admin SDK.
         const snapshot = await firebase.database().ref('/devices/' + deviceID).push({status: status});
-        // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
         res.json({'status':'pushed'});
     } catch(err) {
-        console.log("HARVEST/ERROR: " + err);
+        console.log("HARVEST/ERROR:", err);
         res.json({'status':'errored'});
     }
   });
@@ -50,7 +52,7 @@ app.get('/test', (request, response) => {
     response.send("Device connected !");
 });
 
-// get data from the realtime database based in deviceid
+// get data from the realtime database based on deviceid
 app.get('/:id', (request, response) => {
     const ref = firebaseApp.database().ref('/devices/' + request.params.id);
     return response.json(ref);

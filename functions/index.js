@@ -70,7 +70,7 @@ exports.beaconiee = functions.https.onRequest(async (req, res) => {
         const lat = req.query.lat;
         const lon = req.query.lon;
         // Push the new message into the Realtime Database using the Firebase Admin SDK.
-        const snapshot = await firebase.database().ref('/devices/geo_location' + deviceID).push({'latitude': lat, 'longitude': lon});
+        const snapshot = await firebase.database().ref('/devices/geo_location/' + deviceID).push({'latitude': lat, 'longitude': lon});
         res.json({'geo_status':'pushed'});
     } catch(err) {
         console.log("BEACONIEE/ERROR:", err);

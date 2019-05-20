@@ -4,7 +4,9 @@ const express = require('express');
 const engines = require('consolidate');
 const app = express();
 const cors = require('cors');
-const firebaseApp = firebase.initializeApp();
+const firebaseApp = firebase.initializeApp(
+    functions.config().firebase
+);
 
 
 // Automatically allow cross-origin requests
@@ -13,6 +15,15 @@ app.use(cors({ origin: true }));
 app.engine('hbs', engines.handlebars);
 app.set('views', './views');
 app.set('view engine', 'hbs');
+
+
+
+
+function getDevices(id) {
+    const ref = firebaseApp.database().ref('devices/' + id);
+    return ref.once('value').then(snap =>snap.val());
+  }
+
 
 // // set the status according to deviceid
 // function setStatus(deviceid) {
@@ -32,8 +43,12 @@ app.set('view engine', 'hbs');
 //            active: running on power 
 //            onBattery: running on battery
 //            failure: malfunctioning hardware
-
+//            critical: accident/emergency 
 exports.harvest = functions.https.onRequest(async (req, res) => {
+    if (!req.path) {
+		req.url = `/${req.url}`
+	}
+
     try {
         // Grab the text parameter and deviceID.
         const status = req.query.status;
@@ -47,15 +62,42 @@ exports.harvest = functions.https.onRequest(async (req, res) => {
     }
   });
 
+app.get('/', (req, res) => {
+    res.send('home works with or without trailing slash');
+});
+  
+
+
 // test endpoint to check if deployed server is live or network is reachable
 app.get('/test', (request, response) => {
+    if (!request.path) {
+		request.url = `/${request.url}`
+	}
     response.send("Device connected !");
 });
 
 // get data from the realtime database based on deviceid
 app.get('/:id', (request, response) => {
-    const ref = firebaseApp.database().ref('/devices/' + request.params.id);
-    return response.json(ref);
+    if (!request.path) {
+		request.url = `/${request.url}`
+	}
+    getDevices(request.params.id).then(data => {
+        response.json(data);
+  });
 });
 
+app.get('/beaconiee', (request, response) => {
+    try {
+        // Grab the deviceID, latitude and longitude.
+        const deviceID = req.query.id;
+        const lat = request.query.lat;
+        const lon = request.query.lon;
+        // Push the new message into the Realtime Database using the Firebase Admin SDK.
+        const snapshot = await firebase.database().ref('/devices/geo_location' + deviceID).push({'latitude': lat, 'longitude': lon});
+        res.json({'geo_status':'pushed'});
+    } catch(err) {
+        console.log("BEACONIEE/ERROR:", err);
+        res.json({'status':'errored'});
+    }
+});
 exports.app = functions.https.onRequest(app);

@@ -46,8 +46,8 @@ function getDevices(id) {
 //            critical: accident/emergency 
 exports.harvest = functions.https.onRequest(async (req, res) => {
     if (!req.path) {
-		req.url = `/${req.url}`
-	}
+        req.url = `/${req.url}`
+    }
 
     try {
         // Grab the text parameter and deviceID.
@@ -60,14 +60,28 @@ exports.harvest = functions.https.onRequest(async (req, res) => {
         console.log("HARVEST/ERROR:", err);
         res.json({'status':'errored'});
     }
-  });
+});
+
+
+exports.beaconiee = functions.https.onRequest(async (req, res) => {
+    try {
+        // Grab the deviceID, latitude and longitude.
+        const deviceID = req.query.id;
+        const lat = req.query.lat;
+        const lon = req.query.lon;
+        // Push the new message into the Realtime Database using the Firebase Admin SDK.
+        const snapshot = await firebase.database().ref('/devices/geo_location' + deviceID).push({'latitude': lat, 'longitude': lon});
+        res.json({'geo_status':'pushed'});
+    } catch(err) {
+        console.log("BEACONIEE/ERROR:", err);
+        res.json({'status':'errored'});
+    }
+});
 
 app.get('/', (req, res) => {
     res.send('home works with or without trailing slash');
 });
   
-
-
 // test endpoint to check if deployed server is live or network is reachable
 app.get('/test', (request, response) => {
     if (!request.path) {
@@ -86,18 +100,4 @@ app.get('/:id', (request, response) => {
   });
 });
 
-app.get('/beaconiee', (request, response) => {
-    try {
-        // Grab the deviceID, latitude and longitude.
-        const deviceID = req.query.id;
-        const lat = request.query.lat;
-        const lon = request.query.lon;
-        // Push the new message into the Realtime Database using the Firebase Admin SDK.
-        const snapshot = await firebase.database().ref('/devices/geo_location' + deviceID).push({'latitude': lat, 'longitude': lon});
-        res.json({'geo_status':'pushed'});
-    } catch(err) {
-        console.log("BEACONIEE/ERROR:", err);
-        res.json({'status':'errored'});
-    }
-});
 exports.app = functions.https.onRequest(app);

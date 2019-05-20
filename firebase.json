@@ -8,7 +8,7 @@
     "public": "public",
     "rewrites": [{
       "source": "**",
-      "functions": "harvest,app"
+      "functions": "harvest,app,beaconiee"
     }],
     "ignore": [
       "firebase.json",
